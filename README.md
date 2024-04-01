@@ -2683,6 +2683,8 @@ VALUES
   /*1. How many customers has Foodie-Fi ever had? */
   SELECT COUNT(distinct customer_id) AS total_customers
   FROM subscriptions;
+  ![image](https://github.com/MominaKhurram/SQL/assets/145676374/b6f77512-6e3d-4957-8fd7-0fa4c5245ede)
+
   
   /* 2. What is the monthly distribution of trial plan start_date values for our dataset - use
   the start of the month as the group by value */

@@ -2759,15 +2759,6 @@ ROUND((customer_count) /
 (SELECT SUM(customer_count) FROM plan_name_values) * 100, 1) AS percentage_breakdown
 	from plan_name_values;
     
-    /* ROUGH WORK
-SELECT count(*) from subscriptions WHERE date_format(start_date,'%Y-%m-%d') = '2020-12-31';
-SELECT 
-    CASE WHEN COUNT(*) = 0 THEN NULL ELSE COUNT(*) END AS record_count
-FROM 
-    subscriptions
-WHERE 
-    date_format(start_date,'%Y-%m-%d') = '2020-12-31';
-*/
 /*8. How many customers have upgraded to an annual plan in 2020? */
 WITH upgraded_annual_plan AS (
 select distinct(customer_id)
@@ -2821,8 +2812,7 @@ SELECT
 FROM 
     AnnualPlanUpgrades;
 
-/*
-10. Can you further breakdown this average value into 30 day periods (i.e. 0-30 days, 31-60  days etc) */
+/* 10. Can you further breakdown this average value into 30 day periods (i.e. 0-30 days, 31-60  days etc) */
 
 WITH AnnualPlanUpgrades AS (
     SELECT 
@@ -2880,17 +2870,12 @@ SELECT COUNT(*) AS num_downgrades
 FROM DowngradedPlan;
 
 
-# Customer Journey
+/* 12. Customer Journey*/
 select p.plan_name, s.start_date, s.customer_id
 from subscriptions s
 JOIN plans p ON s.plan_id = p.plan_id;
 
-
-# Q. How many customers has Foodie-Fi ever had?
-select count(distinct customer_id) from subscriptions as customer_count;
-
-
-#2. What is the monthly distribution of trial plan start_date values for our dataset — use the start of the month as the GROUP BY value
+/* 14. What is the monthly distribution of trial plan start_date values for our dataset — use the start of the month as the GROUP BY value*/
 SELECT 
     DATE_FORMAT(start_date, '%Y-%m-01') AS Starting_Month,
     COUNT(plan_id) AS trial_count
@@ -2901,7 +2886,8 @@ WHERE
 GROUP BY DATE_FORMAT(start_date, '%Y-%m-01')
 ORDER BY Starting_Month;
 
-/* 3. What plan ‘start_date’ values occur after the year 2020 for our dataset? Show the breakdown by count of events for each ‘plan_name’.*/
+/* 15. What plan ‘start_date’ values occur after the year 2020 for our dataset? Show the breakdown by count of events for each ‘plan_name’.*/
+
 select p.plan_name, s.plan_id, count(*) AS count_event
 from subscriptions s
 JOIN plans p ON s.plan_id = p.plan_id
@@ -2909,7 +2895,7 @@ WHERE s.start_date>= '2021=01-01'
 group by p.plan_id,p.plan_name
 order by p.plan_id;
 
-# 4. What is the customer count and percentage of customers who have churned the rounded to 1 decimal place?
+/* 16. What is the customer count and percentage of customers who have churned the rounded to 1 decimal place?
 SELECT
     COUNT(DISTINCT CASE WHEN plan_id = 4 THEN customer_id END) AS Churned,
     COUNT(DISTINCT customer_id) AS Total_Customers,
@@ -2920,7 +2906,7 @@ SELECT
     ), '%') AS Churn_Rate_Percentage
 FROM subscriptions;
 
-# How many the customers have churned straight after their initial free trial — what the percentage is this rounded to the nearest whole number?
+/*17. How many the customers have churned straight after their initial free trial — what the percentage is this rounded to the nearest whole number?*/
 
 SELECT 
     COUNT(distinct customer_id) as Customer_churn,

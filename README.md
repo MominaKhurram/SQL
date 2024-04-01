@@ -2685,83 +2685,102 @@ VALUES
   FROM subscriptions;
 
   
-  ![image](https://github.com/MominaKhurram/SQL/assets/145676374/b6f77512-6e3d-4957-8fd7-0fa4c5245ede)
+    ![image](https://github.com/MominaKhurram/SQL/assets/145676374/b6f77512-6e3d-4957-8fd7-0fa4c5245ede)
 
   
-  /* 2. What is the monthly distribution of trial plan start_date values for our dataset - use
-  the start of the month as the group by value */
-SELECT date_format(start_date, '%Y-%m-01') AS month_start,
-     	COUNT(*) AS trial_plan_count	-- counts the no of rows with each group formed by 'GROUP BY'clause
+   /* 2. What is the monthly distribution of trial plan start_date values for our dataset - use  the start of the month as the group by value */
+  
+SELECT month(start_date) AS months,
+     	COUNT(customer_id) AS trial_plan_count	-- counts the no of rows with each group formed by 'GROUP BY'clause
 FROM subscriptions
-WHERE plan_id = 0		-- Filter for trial plan
-GROUP BY date_format(start_date, '%Y-%m-01')
-ORDER BY month_start;		
-    
-  /*3. What plan start_date values occur after the year 2020 for our dataset? Show the breakdown by
-  count of events for each plan_name */
-  SELECT * FROM plans;
-  SELECT * FROM subscriptions;
-  SELECT plan_name,date_format(start_date, '%Y-%m-%d') AS start_date 
+GROUP BY months
+ORDER BY months ;
+
+![image](https://github.com/MominaKhurram/SQL/assets/145676374/17f70dd3-8bdd-4ec9-b3fd-42ffe2237c92)
+
+  /*3. What plan start_date values occur after the year 2020 for our dataset? Show the breakdown by count of events for each plan_name */
+  
+   SELECT p.plan_name,p.plan_id,count(*) AS count_event
   FROM subscriptions s
   JOIN plans p
 	ON p.plan_id = s.plan_id
   WHERE YEAR(start_date) > 2020
-  GROUP BY plan_name, start_date
-  ORDER BY start_date;
+  GROUP BY plan_name, p.plan_id
+  ORDER BY p.plan_id;
   
-  /*4. What is the customer count and percentage of customers who have churned rounded to 1 decimal
-  place? */  
-  SELECT COUNT(DISTINCT customer_id) FROM subscriptions;
-  SELECT COUNT(DISTINCT customer_id)  AS total_churned_customers,
-  ROUND((COUNT(DISTINCT customer_id) / (SELECT COUNT(DISTINCT customer_id) FROM subscriptions))
+  ![image](https://github.com/MominaKhurram/SQL/assets/145676374/0b9ab664-8a94-4413-8ccc-24ae015792a1)
+
+  
+/*4. What is the customer count and percentage of customers who have churned rounded to 1 decimal place? */  
+  
+ SELECT COUNT(*)  AS total_churned_customers,
+ROUND(count(*) / (SELECT COUNT(DISTINCT customer_id) FROM subscriptions)
   * 100, 1) AS churned_percentage
-  FROM subscriptions s
-  JOIN plans p
-	ON s.plan_id = s.plan_id
-  WHERE p.plan_name = 'churn';
-  
+  FROM subscriptions
+  WHERE plan_id = 4;
+
+![image](https://github.com/MominaKhurram/SQL/assets/145676374/b5e3f13c-0859-402a-b3f4-ac5b4161eefd)
 
   
 /* 5. How many customers have churned straight after their initial free trial - what percentage is
  this rounded to the nearest whole number?*/
+
+  
+ WITH CTE_churn AS (
+	select *,
+    LAG(plan_id,1) OVER(partition by customer_id order by plan_id) as previous_plan
+    FROM subscriptions
+    )
+    select count(previous_plan) as count_churn,
+		round(count(*) / (select count(distinct customer_id) from subscriptions)*100,0) as percentage_churn
+        from cte_churn
+        where plan_id = 4 and previous_plan = 0;
  
- SELECT COUNT(DISTINCT customer_id) AS churned_after_trial_count,
- ROUND((COUNT(DISTINCT customer_id)/
- (SELECT COUNT(DISTINCT customer_id) FROM subscriptions WHERE plan_id = 0))*100) AS churned_after_trial_percantage
- FROM subscriptions
- WHERE plan_id = 4;
- 
+
+ ![image](https://github.com/MominaKhurram/SQL/assets/145676374/57dd5b11-8893-4c80-990e-3a6c90c9f1e5)
+
  
  
 /* 6. What is the number and percentage of customer plans after their initial free trial?*/
 
-SELECT count(distinct customer_id) AS total_number_after_trial,
-round((count(distinct customer_id)/
-(SELECT count(distinct customer_id) FROM subscriptions WHERE plan_id!=0))*100,1) AS percentage_of_customers
-FROM subscriptions
-WHERE plan_id!=0;
+WITH CTE_next_plan AS (
+	select *,
+    LEAD(plan_id,1) OVER(partition by customer_id order by plan_id) as next_plan
+    FROM subscriptions
+    )
+    select next_plan, count(*) as no_of_customer,
+		round(count(*) / (select count(distinct customer_id) from subscriptions)*100,1) as percentage_next_plan
+        from cte_next_plan
+        where next_plan is not null and plan_id = 0
+        group by next_plan
+        order by next_plan;
+
+ ![image](https://github.com/MominaKhurram/SQL/assets/145676374/d3226eb2-57c7-4de8-98c1-1210eab05c96)
+
 
 /*7. What is the customer count and percentage breakdown of all 5 plan_name values at 2020-12-31?*/
-SELECT plan_name, count(distinct customer_id) as customer_count,date_format(start_date,'%Y-%m-%d') as given_date,
-round((count(distinct customer_id)/(select count(distinct customer_id)FROM subscriptions where start_date ='2020-12-31'))*100,1) AS percentage_breakdown
-from subscriptions
-join plans
-	ON subscriptions.plan_id = plans.plan_id
-where start_date ='2020-12-31'
-group by plan_name;
-				-- same q6, using CTE 
-WITH plan_name_values as (
-	select plan_name,count(distinct customer_id) as customer_count, date_format(start_date,'%Y-%m-%d') = '2020-12-31'
-        FROM subscriptions 
-	join plans
-		on subscriptions.plan_id = plans.plan_id
-	where start_date = '2020-12-31'
-    group by plan_name
-)
-select plan_name, customer_count, 
-ROUND((customer_count) / 
-(SELECT SUM(customer_count) FROM plan_name_values) * 100, 1) AS percentage_breakdown
-	from plan_name_values;
+WITH CTE_next_date AS (
+	select *,
+    LEAD(start_date,1) OVER(partition by customer_id order by start_date) as next_date
+    FROM subscriptions
+    where start_date<= '2020-12-31'),
+    plans_breakdown as(
+    select 
+    plan_id,
+		count(distinct customer_id) as number_of_customer
+from CTE_next_date
+	where (next_date is not null and (start_date< '2020-12-31' and next_date > '2020-12-31'))
+		OR(next_date is null and start_date < '2020-12-31')
+        group by plan_id)  
+    select plan_id,
+		number_of_customer,
+		round( number_of_customer/ (select count(distinct customer_id) from subscriptions)*100,1) as percentage_of_customer
+        from plans_breakdown
+        group by plan_id, number_of_customer
+        order by plan_id;
+
+ ![image](https://github.com/MominaKhurram/SQL/assets/145676374/c9ad02ac-2019-463f-ad49-2e1d95823f88)
+
     
 /*8. How many customers have upgraded to an annual plan in 2020? */
 WITH upgraded_annual_plan AS (

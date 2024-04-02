@@ -10,7 +10,7 @@ JOIN plans p ON s.plan_id = p.plan_id;
   FROM subscriptions;
 
   
-    ![image](https://github.com/MominaKhurram/SQL/assets/145676374/b6f77512-6e3d-4957-8fd7-0fa4c5245ede)
+ ![image](https://github.com/MominaKhurram/SQL/assets/145676374/99a552c4-d0b2-4382-a3a0-7f24328112d3)
 
   
    /* 2. What is the monthly distribution of trial plan start_date values for our dataset - use  the start of the month as the group by value */
@@ -175,8 +175,8 @@ FROM
     AnnualPlanUpgrades
 GROUP BY 
     period;
-
-    ![image](https://github.com/MominaKhurram/SQL/assets/145676374/31740e84-c84a-4f35-b2a9-2c962a514647)
+    
+![image](https://github.com/MominaKhurram/SQL/assets/145676374/88fe3590-73a0-4ec3-9499-acbe2d54483b)
 
 
 /* 11. How many customers downgraded from a pro monthly to a basic monthly plan in 2020?*/
